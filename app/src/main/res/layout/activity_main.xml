@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="3"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_setPlace"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
+            android:text="직접주소입력"/>
+
+        <Button
+            android:id="@+id/middlePoint"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
+            android:text="중간지점찾기"
+            />
+    </LinearLayout>
+
+
+</LinearLayout>
