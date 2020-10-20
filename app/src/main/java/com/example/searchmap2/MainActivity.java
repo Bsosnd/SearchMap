@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         btn_setPlace=findViewById(R.id.btn_setPlace);
-
         btn_setPlace.setOnClickListener(this);
     }
 

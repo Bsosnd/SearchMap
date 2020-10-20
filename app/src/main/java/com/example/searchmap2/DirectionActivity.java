@@ -8,7 +8,9 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -28,6 +30,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -45,11 +48,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class DirectionActivity extends AppCompatActivity
@@ -63,6 +70,16 @@ public class DirectionActivity extends AppCompatActivity
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int UPDATE_INTERVAL_MS = 1000;  // 1초
     private static final int FASTEST_UPDATE_INTERVAL_MS = 500; // 0.5초
+
+    //private ArrayList<HashMap<Integer,String>> getlist = new ArrayList<HashMap<Integer, String>>();
+    //private ArrayList<SampleItem> getlist  = new ArrayList();
+    private ArrayList<ArrayList<SampleItem>> getlist = new ArrayList<ArrayList<SampleItem>>();
+    private String[] getdurArray;
+
+    //private String[] simpleInfo; //간단한 정보 텍스트
+    //private String[] detailInfo; //디테일 정보
+    private ArrayList<String> simpleInfo;
+    private ArrayList<String> detailInfo;
 
 
     // onRequestPermissionsResult에서 수신된 결과에서 ActivityCompat.requestPermissions를 사용한 퍼미션 요청을 구별하기 위해 사용됩니다.
@@ -122,9 +139,52 @@ public class DirectionActivity extends AppCompatActivity
 
         container =(LinearLayout) findViewById(R.id.layout_1);
 
+
+
+        getdurArray = parser.getDurArray();
+
         System.out.println("도착지 받아오기 : "+arriv);
 
-        textview(showInfo(curr_latitude,curr_longtitude,arriv));
+        showInfo(curr_latitude,curr_longtitude,arriv);
+        System.out.println("getlist는 : "+getlist);
+
+        for(int i=0;i<getlist.size();i++){
+            ArrayList<SampleItem> inner = new ArrayList<SampleItem>();
+            textview(i+1+"번째");
+            textview("총 이동시간 : "+getdurArray[i]);
+            inner = getlist.get(i);
+            for(int j=0;j<inner.size();j++){
+                //inner.get(j);
+                textview(inner.get(j).getImg_num(),inner.get(j).getText());
+
+            }
+        }
+
+//        for(int i=0;i<getlist.size();i++){
+//            for(Map.Entry<Integer,String> elem:getlist.get(i).entrySet()){
+//                //list각각 hashmap받아서 출력
+//                textview(elem.getKey(),elem.getValue());
+//            }
+//        }
+
+        int sizeL = getlist.size();
+//        System.out.println("size: "+sizeL);
+//        for(int i=sizeL-1;i>=0;i--){
+//            SampleItem sp = getlist.get(sizeL-i+2);
+//            System.out.println(getlist.get(sizeL-i+2));
+//            textview(sp.getImg_num(),sp.getText());
+//            System.out.println("테스트 시작 : "+getlist.get(sizeL-i+2));
+//        }
+
+//        System.out.println("size: "+sizeL);
+//        for(int i=0;i<sizeL;i++){
+//            //SampleItem sp = getlist.get(i);
+//            textview(sp.getImg_num(),sp.getText());
+//            System.out.println("테스트 시작 : "+getlist.get(i));
+//        }
+
+
+        //textview(showInfo(curr_latitude,curr_longtitude,arriv));
     }
 
 
@@ -412,7 +472,7 @@ public class DirectionActivity extends AppCompatActivity
         }
     }
 
-    public String showInfo(double latitude, double longtitude,String arrival){
+    public void showInfo(double latitude, double longtitude,String arrival){
 
         String apiKey = getString(R.string.api_key);
         Intent a = getIntent();
@@ -424,7 +484,8 @@ public class DirectionActivity extends AppCompatActivity
 
         str_url="https://maps.googleapis.com/maps/api/directions/json?"+
                 "origin="+str_origin+"&destination="+str_dest+"&mode=transit"+
-                "&alternatives=true&language=Korean&key="+apiKey;
+                "&alternatives=true&language=ko&key="+apiKey;
+
 
         String resultText = "값이 없음";
 
@@ -433,8 +494,9 @@ public class DirectionActivity extends AppCompatActivity
 
             System.out.println("str_url 출력하기 : "+str_url);
             System.out.println("resultText : "+resultText);
-            str_info=parser.parse(resultText);
-            System.out.println("str_info : "+str_info);
+            //str_info=parser.parse(resultText);
+            getlist = parser.parse(resultText);
+            //System.out.println("str_info : "+str_info);
             //textview(str_info);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -442,8 +504,23 @@ public class DirectionActivity extends AppCompatActivity
             e.printStackTrace();
         }
         System.out.println("str_info : "+str_info);
-        return str_info;
+        //return str_info;
     }
+
+//    int simpleCheck=0;
+//    int detailCheck=0;
+//    public void setSimpleInfo(String simple){
+//        simpleInfo.add(simple);
+//        textview(simpleInfo.get(simpleCheck));
+//        simpleCheck++;
+//
+//    }
+//
+//    public void setDetailInfo(String datail){
+//        detailInfo.add(datail);
+//        textview(detailInfo.get(detailCheck));
+//        detailCheck++;
+//    }
 
     public void textview(String a){
         //TextView 생성
@@ -459,8 +536,45 @@ public class DirectionActivity extends AppCompatActivity
         view1.setLayoutParams(lp);
 
         container.addView(view1);
+    }
 
+    Drawable img;
+    //Drawble img 추가
+    public void textview(int img_num,String a){
 
+        Resources res = getResources();
+
+        switch(img_num){
+            case 0:
+                img = ResourcesCompat.getDrawable(res,R.drawable.walk,null);
+                break;
+            case 1:
+                img = ResourcesCompat.getDrawable(res,R.drawable.bus,null);
+                break;
+            case 2:
+                img = ResourcesCompat.getDrawable(res,R.drawable.subway,null);
+                break;
+
+        }
+
+        //TextView 생성
+        TextView view1 = new TextView(this);
+        view1.setText(a);
+        view1.setTextSize(FONT_SIZE);
+        view1.setTextColor(Color.BLACK);
+
+        int h = 100;
+        int w = 100;
+        img.setBounds(0, 0, w, h);
+        view1.setCompoundDrawables(img,null,null,null);
+
+        //layout_width, layout_height, gravity 설정
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams
+                (ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity= Gravity.CENTER;
+        view1.setLayoutParams(lp);
+
+        container.addView(view1);
     }
 
     class Point {

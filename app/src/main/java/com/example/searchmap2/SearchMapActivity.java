@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -59,7 +60,6 @@ public class SearchMapActivity extends AppCompatActivity
     List<Marker> previous_marker = null;
 
     private static final String TAG = SearchMapActivity.class.getSimpleName();
-    private String apiKey = getString(R.string.api_key);
 
     private String address=null;
     private LatLng arrival;
@@ -68,6 +68,22 @@ public class SearchMapActivity extends AppCompatActivity
     private View layout_search;
 
     int category; //선택한 카테고리 넘버
+
+    // 구글 서버로 부터 받아온 데이터를 저장할 리스트
+    ArrayList<Double> lat_list;
+    ArrayList<Double> lng_list;
+    ArrayList<String> name_list;
+    ArrayList<String> vicinity_list;
+    // 지도의 표시한 마커(주변장소표시)를 관리하는 객체를 담을 리스트
+    ArrayList<Marker> markers_list;
+    // 다이얼로그를 구성하기 위한 배열
+    String[] category_name_array={
+            "모두","ATM","은행","미용실","카페","교회","주유소","식당"
+    };
+    // types 값 배열
+    String[] category_value_array={
+            "all","atm","bank","beauty_salon","cafe","church","gas_station","restaurant"
+    };
 
 
     @Override
@@ -79,6 +95,8 @@ public class SearchMapActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_search_map);
 
+
+        String apiKey = getString(R.string.api_key);
 
         previous_marker = new ArrayList<Marker>();
 
@@ -122,7 +140,7 @@ public class SearchMapActivity extends AppCompatActivity
                 markerOptions.snippet(address);
                 mMap.addMarker(markerOptions);
 
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(arrival, 11));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(arrival, 12));
             }
 
             @Override
@@ -178,7 +196,6 @@ public class SearchMapActivity extends AppCompatActivity
                     if (previous_marker != null)
                         previous_marker.clear();//지역정보 마커 클리어
                     show();
-                    showPlaceInformation(arrival);
                     break;
                     }
         }
@@ -187,112 +204,45 @@ public class SearchMapActivity extends AppCompatActivity
 
     void show() //카테고리 보여주기
     {
-        final List<String> ListItems = new ArrayList<>();
-        ListItems.add("모두");
-        ListItems.add("음식점");
-        ListItems.add("카페");
-        ListItems.add("버스 정류장");
-        ListItems.add("은행");
-        ListItems.add("공원");
-
-        final CharSequence[] items =  ListItems.toArray(new String[ ListItems.size()]);
-
-        final List SelectedItems  = new ArrayList();
-        int defaultItem = 0;
-        SelectedItems.add(defaultItem);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("장소 카테고리 선택");
-        builder.setSingleChoiceItems(items, defaultItem,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        SelectedItems.clear();
-                        SelectedItems.add(which);
-                    }
-                });
-        builder.setPositiveButton("Ok",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        String msg="";
-
-                        if (!SelectedItems.isEmpty()) {
-                            int index = (int) SelectedItems.get(0);
-                            msg = ListItems.get(index);
-                            category=index; /////////
-                        }
-                        Toast.makeText(getApplicationContext(),
-                                "Items Selected.\n"+ msg , Toast.LENGTH_LONG)
-                                .show();
-                    }
-                });
-        builder.setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                });
+        // 카테고리를 선택 할 수 있는 리스트를 띄운다.
+        AlertDialog.Builder builder=new AlertDialog.Builder(this);
+        builder.setTitle("장소 타입 선택");
+        ArrayAdapter<String> adapter= new ArrayAdapter<String>(
+                this,android.R.layout.simple_list_item_1,category_name_array
+        );
+        DialogListener listener=new DialogListener();
+        builder.setAdapter(adapter,listener);
+        builder.setNegativeButton("취소",null);
         builder.show();
     }
+    // 다이얼로그의 리스너
+    class DialogListener implements DialogInterface.OnClickListener{
 
-    public void showPlaceInformation(LatLng location)
-    {
-
-        switch(category){//카테고리별 검색
-            case 0: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .build()
-                    .execute();
-                break;
-            case 1: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .type(PlaceType.RESTAURANT) //음식점
-                    .build()
-                    .execute();
-                break;
-            case 2: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .type(PlaceType.CAFE) //카페
-                    .build()
-                    .execute();
-                break;
-            case 3: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .type(PlaceType.BUS_STATION) //버스 정류장
-                    .build()
-                    .execute();
-                break;
-            case 4: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .type(PlaceType.BANK) //은행
-                    .build()
-                    .execute();
-                break;
-            case 5: new NRPlaces.Builder()
-                    .listener(SearchMapActivity.this)
-                    .key(apiKey)
-                    .latlng(location.latitude, location.longitude)//현재 위치
-                    .radius(500) //500 미터 내에서 검색
-                    .type(PlaceType.PARK) //공원
-                    .build()
-                    .execute();
-                break;
+        @Override
+        public void onClick(DialogInterface dialogInterface, int i) {
+            // 사용자가 선택한 항목 인덱스번째의 type 값을 가져온다.
+            String type=category_value_array[i];
+            // 주변 정보를 가져온다
+            showPlaceInformation(arrival,type);
         }
+    }
+
+    public void showPlaceInformation(LatLng location,String type)
+    {
+        mMap.clear();//지도 클리어
+        String apiKey = getString(R.string.api_key);
+
+        if (previous_marker != null)
+            previous_marker.clear();//지역정보 마커 클리어
+
+        new NRPlaces.Builder()
+                .listener(SearchMapActivity.this)
+                .key(apiKey)
+                .latlng(location.latitude, location.longitude)//현재 위치
+                .radius(500) //500 미터 내에서 검색
+                .type(type) //음식점
+                .build()
+                .execute();
 
     }
 
